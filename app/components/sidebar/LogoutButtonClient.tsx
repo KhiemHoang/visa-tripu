@@ -1,21 +1,23 @@
-'use client'
-import { supabase } from '@/app/lib/supabase'
-import { useRouter } from 'next/navigation'
+"use client";
+
+import { useRouter } from "next/navigation";
+import { createClient } from "@/app/lib/supabase";
 
 export default function LogoutButtonClient() {
-  const router = useRouter()
+  const router = useRouter();
+  const supabase = createClient();
 
-  async function handleLogout() {
-    await supabase.auth.signOut()
-    window.location.href = '/login'
-  }
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.push("/login");
+  };
 
   return (
     <button
       onClick={handleLogout}
-      className="w-full text-left px-3 py-2 text-sm text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-md transition-colors"
+      className="w-full rounded-md px-3 py-2 text-left text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
     >
       Đăng xuất
     </button>
-  )
+  );
 }

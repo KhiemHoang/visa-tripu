@@ -1,8 +1,8 @@
-import { createServerClient } from '@supabase/ssr'
-import { NextResponse, type NextRequest } from 'next/server'
+import { createServerClient } from "@supabase/ssr";
+import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
-  let response = NextResponse.next({ request })
+  const response = NextResponse.next();
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -11,31 +11,30 @@ export async function middleware(request: NextRequest) {
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) => {
+          cookiesToSet.forEach(({ name, value, options }) =>
             response.cookies.set(name, value, options)
-          })
+          );
         },
       },
     }
-  )
+  );
 
-  // ✅ Dùng getUser() thay vì getSession() — verify với Supabase server
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user } } = await supabase.auth.getUser();
+  const { pathname } = request.nextUrl;
 
-  const isLoginPage = request.nextUrl.pathname.startsWith('/login')
-
-  if (!user && !isLoginPage) {
-    return NextResponse.redirect(new URL('/login', request.url))
+  // Đã login → không cho vào /login nữa
+  if (user && pathname === "/login") {
+    return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Nếu đã login mà vào /login → redirect về dashboard
-  if (user && isLoginPage) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+  // Chưa login → chặn tất cả route /dashboard/*
+  if (!user && pathname.startsWith("/dashboard")) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  return response
+  return response;
 }
 
 export const config = {
-  matcher: ['/dashboard/:path*', '/login'],
-}
+  matcher: ["/login", "/dashboard/:path*"],
+};
